@@ -1,10 +1,7 @@
 'use strict';
 
-const mongoose = require('mongoose');
 require('dotenv').config();
-const Book = require('./bookModel.js');
-
-mongoose.connect(process.env.MONGODB_URI);
+const Book = require('./models/bookModel.js');
 
 async function seed() {
   const myBook = new Book({
@@ -13,6 +10,7 @@ async function seed() {
     status: 'Available',
     email: 'mlh6118@gmail.com'
   });
+  
   await myBook.save(function (err) {
     if (err) console.error(err);
     else console.log('Saved The Outsiders');
@@ -26,18 +24,17 @@ async function seed() {
   });
   console.log('Saved Red Badge of Courage');
 
-  const myBook = new Book({
+  const myBook2 = new Book({
       title: 'Dogs Rock',
       description: 'The lives of dogs.',
       status: 'Available',
       email: 'tiaradominique.b@gmail.com'
     });
-    await myBook.save(function (err) {
+    await myBook2.save(function (err) {
       if (err) console.error(err);
       else console.log('Saved Dogs Rock');
     });
 
-  mongoose.disconnect();
 }
 
-seed();
+module.exports = seed;
