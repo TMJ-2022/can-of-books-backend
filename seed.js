@@ -26,7 +26,16 @@ async function seed() {
   });
   console.log('Saved Red Badge of Courage');
 
-  // Placeholder for T's book.
+  const myBook = new Book({
+      title: 'Dogs Rock',
+      description: 'The lives of dogs.',
+      status: 'Available',
+      email: 'tiaradominique.b@gmail.com'
+    });
+    await myBook.save(function (err) {
+      if (err) console.error(err);
+      else console.log('Saved Dogs Rock');
+    });
 
   mongoose.disconnect();
 }

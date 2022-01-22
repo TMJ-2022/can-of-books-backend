@@ -23,25 +23,27 @@ app.get('/', (request, response) => {
   response.send('test request received')
 })
 
-app.get('/books', handleGetBooks);
+// app.get('/books', handleGetBooks);
 
-async function handleGetBooks(request, response) {
-  try {
-      let queryObj = {};
-      if (request.query.title) {
-        queryObj = {title: request.query.title}
-      }
-      let booksFromDB = await Book.find(queryObj);
+// async function handleGetBooks(request, response) {
+  // console.log("request", request.body);
+//   console.log("response", response.body);
+  // try {
+  //     let queryObj = {};
+  //     if (request.query.email) {
+  //       queryObj = {email: request.query.email}
+  //     }
+  //     let booksFromDB = await Book.find(queryObj);
 
-    if (booksFromDB) {
-      response.status(200).send(booksFromDB);
-    } else {
-      response.status(404).send('Read something else!');
-    }
-  } catch (error) {
-    console.error(error);
-    response.status(500).send('Server error.');
-  }
-}
+  //   if (booksFromDB) {
+  //     response.status(200).send(booksFromDB);
+  //   } else {
+  //     response.status(404).send('Booklist not found.');
+  //   }
+  // } catch (error) {
+  //   console.error(error);
+  //   response.status(500).send('Server error.');
+  // }
+// }
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
