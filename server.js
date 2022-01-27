@@ -59,17 +59,22 @@ async function handleRemoveBook(request, response) {
     const email = request.query.email;
 
     const id = request.params.id;
+    console.log(id, email);
 
     const book = await Book.findOne({ _id: id, email: email });
+    // const book = await Book.findByIdAndDelete(id);
 
-    if (!book) {
-      response.status(400).send('Failed to remove book');
+    if (book) {
+      await Book.findByIdAndDelete(id);
+      response.send('success');
+    } else {
+      response.status(404).send('No access to this book.');
       return;
     }
 
-    await Book.findByIdAndDelete(id);
+    // await Book.findByIdAndDelete(id);
 
-    response.send('success');
+
   } catch (error) {
     console.error(error);
     response.status(400).send('Failed to remove book')
