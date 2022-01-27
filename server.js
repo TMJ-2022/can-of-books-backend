@@ -62,7 +62,6 @@ async function handleRemoveBook(request, response) {
     console.log(id, email);
 
     const book = await Book.findOne({ _id: id, email: email });
-    // const book = await Book.findByIdAndDelete(id);
 
     if (book) {
       await Book.findByIdAndDelete(id);
@@ -72,14 +71,16 @@ async function handleRemoveBook(request, response) {
       return;
     }
 
-    // await Book.findByIdAndDelete(id);
-
-
   } catch (error) {
     console.error(error);
     response.status(400).send('Failed to remove book')
   }
 }
 
+app.put('/books/:id', async (req, res) => {
+  const { title, description, status, email } = req.body;
+  const updatedBook = await Book.findByIdAndUpdate(req.params.id, { title, description, status, email }, {new: true, overwrite: true})
+  res.send(updatedBook);
+});
 
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
