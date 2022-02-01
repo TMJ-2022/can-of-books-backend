@@ -13,15 +13,40 @@ const Book = require('./models/bookModel');
 
 const PORT = process.env.PORT || 3002;
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }).then(console.log('Mongoose is connected')).then(seed());
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }).then(console.log('Mongoose is connected'))
+// .then(seed());
 
 app.get('/', (request, response) => {
   response.send('test request received')
 })
 
+let handleUpdateBook = async (req, res) => {
+  const id = req.params.id;
+  console.log(id);
+  const email = req.query.email;
+  console.log(email);
+  try {
+    const updateBook = await Book.findOne({_id: id, email: email})
+    if ( !updateBook ) {
+      res.status(404).send('Book not found.');
+      return;
+    }
+    if ( updateBook.email !== email ) {
+      res.status(404).send('Email not found.');
+      return;
+    }
+    const updatedBook = await Book.findByIdAndUpdate(id, req.body, {new: true})
+    res.send(updatedBook);
+  } catch(error) {
+    console.error(error);
+    res.status(500).send('Unable to update book.');
+  }
+};
+
 app.get('/books', handleGetBooks);
 app.post('/books', handleNewBook);
 app.delete('/books/:id', handleRemoveBook);
+app.put('/books/:id', handleUpdateBook);
 
 async function handleGetBooks(request, response) {
   // console.log("request", request.body);
@@ -62,7 +87,6 @@ async function handleRemoveBook(request, response) {
     console.log(id, email);
 
     const book = await Book.findOne({ _id: id, email: email });
-    // const book = await Book.findByIdAndDelete(id);
 
     if (book) {
       await Book.findByIdAndDelete(id);
@@ -71,9 +95,6 @@ async function handleRemoveBook(request, response) {
       response.status(404).send('No access to this book.');
       return;
     }
-
-    // await Book.findByIdAndDelete(id);
-
 
   } catch (error) {
     console.error(error);
