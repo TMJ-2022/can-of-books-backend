@@ -3,50 +3,51 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const seed = require('./seed.js');
+// const seed = require('./seed.js');
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const mongoose = require('mongoose');
 const Book = require('./models/bookModel');
+const verifyUser = require('./authentication.js');
 
 const PORT = process.env.PORT || 3002;
 
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true }).then(console.log('Mongoose is connected'))
-// .then(seed());
+
 
 app.get('/', (request, response) => {
   response.send('test request received')
 })
 
 let handleUpdateBook = async (req, res) => {
-  const id = req.params.id;
-  console.log(id);
-  const email = req.query.email;
-  console.log(email);
-  try {
-    const updateBook = await Book.findOne({_id: id, email: email})
-    if ( !updateBook ) {
-      res.status(404).send('Book not found.');
-      return;
+  console.log("request query", req.query);
+  console.log("request body", req.body);
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      res.send('invalid token');
+    } else {
+      const { id } = req.params;
+      try {
+        const book = await Book.findOne({ _id: id, email: user.email });
+        if (!book) res.status(400).send('unable to update book');
+        else {
+          const updatedBook = await Book.findByIdAndUpdate(id, req.body, { new: true });
+          res.status(200).send(updatedBook);
+        }
+      } catch (e) {
+        res.status(500).send('server error');
+      }
     }
-    if ( updateBook.email !== email ) {
-      res.status(404).send('Email not found.');
-      return;
-    }
-    const updatedBook = await Book.findByIdAndUpdate(id, req.body, {new: true})
-    res.send(updatedBook);
-  } catch(error) {
-    console.error(error);
-    res.status(500).send('Unable to update book.');
-  }
+})
 };
 
 app.get('/books', handleGetBooks);
 app.post('/books', handleNewBook);
 app.delete('/books/:id', handleRemoveBook);
 app.put('/books/:id', handleUpdateBook);
+app.get('/user', handleGetUser);
 
 async function handleGetBooks(request, response) {
   // console.log("request", request.body);
@@ -70,36 +71,62 @@ async function handleGetBooks(request, response) {
 }
 
 async function handleNewBook(request, response) {
-  try {
-    const book = await Book.create(request.body);
-    response.send(book);
-  } catch (error) {
-    console.error(error);
-    response.status(400).send('Could not create book');
-  }
+  verifyUser(req, async (err, user) => {
+    if (err) {
+      res.send('invalid token');
+    } else {
+      const { title, description, status } = req.body;
+      try {
+        const newBook = await Book.create({ ...req.body, email: user.email })
+        res.status(200).send(newBook)
+    } catch (error) {
+      console.error(error);
+      response.status(400).send('Could not create book');
+    }
+  }})
+
 }
 
 async function handleRemoveBook(request, response) {
-  try {
-    const email = request.query.email;
 
-    const id = request.params.id;
-    console.log(id, email);
-
-    const book = await Book.findOne({ _id: id, email: email });
-
-    if (book) {
-      await Book.findByIdAndDelete(id);
-      response.send('success');
+  verifyUser(request, async (err, user) => {
+    if (err) {
+      response.send('invalid token');
     } else {
-      response.status(404).send('No access to this book.');
-      return;
+      const { id } = request.params;
+    try {
+      // const email = request.query.email;
+  
+      // const id = request.params.id;
+      console.log(id, email);
+  
+      const book = await Book.findOne({ _id: id, email: user.email });
+  
+      if (book) {
+        await Book.findByIdAndDelete(id);
+        response.send('success you deleted it');
+      } else {
+        response.status(404).send('No access to this book.');
+        return;
+      }
+  
+    } catch (error) {
+      console.error(error);
+      response.status(400).send('Failed to remove book')
     }
 
-  } catch (error) {
-    console.error(error);
-    response.status(400).send('Failed to remove book')
-  }
+  }})
+
+}
+
+function handleGetUser(req, res) {
+  verifyUser(req, (err, user) => {
+    if (err) {
+      res.send('This token is invalid');
+    } else {
+      res.send(user);
+    }
+  })
 }
 
 
